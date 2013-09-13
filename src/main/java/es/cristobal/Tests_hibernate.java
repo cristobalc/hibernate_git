@@ -1,7 +1,9 @@
 package es.cristobal;
 
+
 import java.util.Date;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
 
 import javax.persistence.EntityManager;
@@ -53,14 +55,26 @@ Pasos para crear una PERSISTENCE-UNIT con Hibernate Entity Manager en ENTORNOS N
 
 public class Tests_hibernate {
 
-  private static final Random random = new Random();
-    
-  public void test_insert() // Este test genera un estándar con cien indicadores viculados y persistirlo
+  private static final Random random = new Random();   
+  EntityManagerFactory emf;
+  EntityManager em;
+  
+  public Tests_hibernate() {
+	  super();
+	  emf = Persistence.createEntityManagerFactory("test");
+	  em = emf.createEntityManager();
+  }
+  
+  public Tests_hibernate(EntityManagerFactory emf, EntityManager em) {
+	super();
+	this.emf = emf;
+	this.em = em;
+  }
+
+  public java.lang.Long test_insert() // Este test genera un estándar con cien indicadores viculados y persistirlo
   {
 	  // INICIALIZAR LA TRANSACCIÓN
       GeometryFactory geometryFactory = new GeometryFactory(); // Para generar un valor de tipo "punto", usamos el módulo "hibernate-spatial"
-      EntityManagerFactory emf = Persistence.createEntityManagerFactory("test");
-      EntityManager em = emf.createEntityManager();
       EntityTransaction et= em.getTransaction();
       et.begin();
       
@@ -70,7 +84,6 @@ public class Tests_hibernate {
       //estandar.setEst_id(0); // Este id lo genera la base de datos
       estandar.setEst_name("Estandar ".concat(randomLong.toString()));
       estandar.setVinculados(new LinkedList<Vinculado>());
-      System.out.println(estandar.toString());
             
       for(int i=0;i<100;i++){
     	  
@@ -78,7 +91,9 @@ public class Tests_hibernate {
           Vinculado vinculado = new Vinculado();
           
           //vinculado.setVinc_id(i); // Este id lo genera la base de datos
-          vinculado.setEst_id(estandar.getEst_id());
+          //vinculado.setEst_id(estandar.getEst_id()); // Esto no vale la pena hacerlo, porque el id
+          											   // todavía no ha sido asignado por la base de 
+          											   // datos y por tanto siempre es 0
           vinculado.setChecked('1');
           
           Byte [] Miblob= new Byte[100];
@@ -99,90 +114,82 @@ public class Tests_hibernate {
           
           // 2. INSERTAR VINCULADO EN EL ESTÁNDAR
           estandar.getVinculados().add(vinculado);   
-          System.out.println(vinculado.toString());
       }
-      em.persist(estandar);//¿qué pasará aquí?
-      
-      // EJECUTAR LA TRANSACCIÓN
-      et.commit();
+     
+	  try {
+	      em.persist(estandar);//¿qué pasará aquí?  
+	      et.commit();    // EJECUTAR LA TRANSACCIÓN      
+	      return estandar.getEst_id();
+	  } catch(Exception e){
+	  	  et.rollback(); 	  
+	  	  return (long)0;
+	  }
   }
   
-  public void test_read()
+  public Estandar test_read(java.lang.Long id)
   {
-	  /*
-	// Generar un estándar con 100 indicadores vinculados
-	Estandar e= new Estandar();
-    
-    
-    
-    
-    // INICIAR UN ENTITY MANAGER
-    EntityManagerFactory emf = Persistence.createEntityManagerFactory("test"); // Cada EntityManager puede realizar las operaciones básicas Create, Read, Update y Delete sobre un conjunto de objetos persistentes o entidades
-    
-    
-    // REALIZAR UNA QUERY
-    EntityManager em = emf.createEntityManager();
-    Query query = em.createQuery("select col from test tabla_db");
-    
-    // PERSISTIR UNA ENTIDAD
-    EntityTransaction tx = em.getTransaction();
-    TablaDB tabla_db = new TablaDB();
-    try {
-      em.persist(tabla_db);
-      tx.commit();
-    } catch(Exception e){
-      tx.rollback();
-    }
-    
-    // PERSISTIR UNA ENTIDAD
-    EntityManager miem = emf.createEntityManager();  		
-    miem.getTransaction().begin();
-    TablaDB tdb = new TablaDB();
-    //tdb está en estado NEW
-    tdb.setName(“Tabla”);
-    em.persist(tdb);
-    //tdb está en estado MANAGED
-    em.getTransaction().commit();
-    
-    // ACTUALIZAR UNA ENTIDAD
-    EntityManager myem = emf.createEntityManager();
-    myem.getTransaction().begin();
-    TablaDB tabdb = myem.find(TablaDB.class,17);
-    tabdb.setName("un nombre diferente"); //acabamos de cambiar el nombre!
-    myem.getTransaction().commit();//en este punto se actualizan los datos de la entidad
-    
-    // CONSULTAR UNA ENTIDAD
-    EntityManager Em = emf.createEntityManager();
-    TablaDB tab_db = Em.find(TablaDB.class,17);
-    //TablaDB está en estado MANAGED
-    
-    // ELIMINAR UNA ENTIDAD
-    EntityManager MEm = emf.createEntityManager();
-    MEm.getTransaction().begin();
-    TablaDB tadb = MEm.find(TablaDB.class,17);
-    //tadb está en estado MANAGED
-    MEm.remove(tadb);
-    MEm.getTransaction().commit();
-    //ahora tadb está en estado REMOVED
-    
-    // DESCONECTAR UNA ENTIDAD
-    EntityManager mem = emf.createEntityManager();
-    TablaDB td = mem.find(TablaDB.class,17);
-    mem.close();
-    //td está es estado DETACHED
-     */	  
+	  	// CONSULTAR UNA ENTIDAD, no necesita transacción
+	  	Estandar e= em.find(Estandar.class,id);
+	  	// Estándar tiene que estar en estado MANAGED 
+	  	return e;
   }
   
-  public void test_update()
+  public void test_update(java.lang.Long id)
   {
-	  
+		// ACTUALIZAR UNA ENTIDAD
+	    EntityTransaction et= em.getTransaction();
+	    
+		et.begin();
+		
+		Estandar e = em.find(Estandar.class,id);	
+		if (e!=null)
+		{
+			// Actualizamos las entidades
+			e.setEst_name("UPDATED"); //acabamos de cambiar el nombre!
+			List<Vinculado> lv= e.getVinculados();
+			for (Vinculado v:lv) {
+				v.setReporte("UPDATED");
+			}
+	
+			try {
+			    em.persist(e);  
+			    et.commit(); //en este punto se actualizan los datos de la entidad
+			} catch(Exception ex){
+			  	et.rollback();
+			} 
+		} else et.rollback();
   }
   
-  public void test_delete()
+  public void test_delete(java.lang.Long id)
   {
-	  
+		// ELIMINAR UNA ENTIDAD
+	    EntityTransaction tx= em.getTransaction();	
+	    
+		Estandar e = em.find(Estandar.class,id); //e está en estado MANAGED
+		if (e!=null) 
+		{
+			tx.begin();
+			try {
+				em.remove(e); //ahora e está en estado REMOVED 
+			    tx.commit();
+			} catch(Exception ex){
+			  	tx.rollback();
+			} 
+		}
   }
 	
+  /*
+	// REALIZAR UNA QUERY
+	EntityManager em = emf.createEntityManager();
+	Query query = em.createQuery("select col from test tabla_db");
+	
+	// DESCONECTAR UNA ENTIDAD
+	EntityManager mem = emf.createEntityManager();
+	TablaDB td = mem.find(TablaDB.class,17);
+	mem.close();
+	//td está es estado DETACHED
+	 */	 	
+  
   public static void main(String args[])
   {
 	  Tests_hibernate rh= new Tests_hibernate();
@@ -190,17 +197,27 @@ public class Tests_hibernate {
 	  // TESTEAMOS CRUD
 	  
 	  // Testeamos el CREATE
-	  rh.test_insert();
-	  
-	  // Testeamos el READ
-	  rh.test_read();
+	  System.out.println("TEST CREATE");
+	  Long id=rh.test_insert();
 	  
 	  // Testeamos el UPDATE
-	  rh.test_update();
+	  System.out.println("TEST UPDATE");
+	  rh.test_update(id);
+	  
+	  // Testeamos el READ
+	  System.out.println("TEST READ");
+	  Estandar e=rh.test_read(id);
+	  if (e!=null)
+	  {
+		  System.out.println("El estándar que he extraído es: \n"+e.toString());
+		  for (Vinculado v:e.getVinculados())
+			  System.out.println(v.toString());
+	  }
 	  
 	  // Testeamos el DELETE
-	  rh.test_delete();
- 
+	  System.out.println("TEST DELETE");
+	  rh.test_delete(id);
+	  
 	  return;
   }
 

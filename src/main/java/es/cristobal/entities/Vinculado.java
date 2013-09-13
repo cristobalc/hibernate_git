@@ -28,7 +28,6 @@ public class Vinculado {
 	public Vinculado() {
 		super();
 		this.vinc_id = -1;
-		this.est_id = -1;
 		this.report_location = null;
 		this.num_personas = -1;
 		this.report_time = null;
@@ -71,7 +70,7 @@ public class Vinculado {
     
      @Override
 	public String toString() {
-		return "Vinculado [vinc_id=" + vinc_id + ", est_id=" + est_id
+		return "Vinculado [vinc_id=" + vinc_id + ", est_id=" + estandar.getEst_id()
 				+ ", report_location=|" + report_location + "|, num_personas="
 				+ num_personas + ", report_time=|" + report_time + "|, reporte=|"
 				+ reporte + "|, checked=|" + checked + "|, miblob=|"
@@ -141,14 +140,6 @@ public class Vinculado {
 
 	public void setVinc_id(long vinc_id) {
 		this.vinc_id = vinc_id;
-	}
-
-	public long getEst_id() {
-		return est_id;
-	}
-
-	public void setEst_id(long est_id) {
-		this.est_id = est_id;
 	}
 
 	public Point getReport_location() {

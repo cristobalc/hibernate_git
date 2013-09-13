@@ -10,7 +10,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
-
+import static javax.persistence.FetchType.*;
 
 /**
  * Entidad Estándar
@@ -35,7 +35,7 @@ public class Estandar {
 	}
 
 	// 2. JOINS
-    @OneToMany(mappedBy="vinc_id", cascade={CascadeType.ALL})
+    @OneToMany(mappedBy="est_id", cascade={CascadeType.ALL}, fetch=LAZY)
     private List<Vinculado> vinculados;
 
     // 3. GETTERS AND SETTERS
