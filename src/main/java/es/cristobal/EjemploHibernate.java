@@ -10,6 +10,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
+import javax.persistence.Query;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
@@ -53,19 +54,19 @@ Pasos para crear una PERSISTENCE-UNIT con Hibernate Entity Manager en ENTORNOS N
 
 */
 
-public class Tests_hibernate {
+public class EjemploHibernate {
 
   private static final Random random = new Random();   
   EntityManagerFactory emf;
   EntityManager em;
   
-  public Tests_hibernate() {
+  public EjemploHibernate() {
 	  super();
 	  emf = Persistence.createEntityManagerFactory("test");
 	  em = emf.createEntityManager();
   }
   
-  public Tests_hibernate(EntityManagerFactory emf, EntityManager em) {
+  public EjemploHibernate(EntityManagerFactory emf, EntityManager em) {
 	super();
 	this.emf = emf;
 	this.em = em;
@@ -160,39 +161,62 @@ public class Tests_hibernate {
 		} else et.rollback();
   }
   
-  public void test_delete(java.lang.Long id)
+  public java.lang.Long test_delete(java.lang.Long id)
   {
 		// ELIMINAR UNA ENTIDAD
 	    EntityTransaction tx= em.getTransaction();	
+	    Long id_retorno= 0L;
 	    
 		Estandar e = em.find(Estandar.class,id); //e está en estado MANAGED
 		if (e!=null) 
 		{
 			tx.begin();
 			try {
+				id_retorno= e.getEst_id();
 				em.remove(e); //ahora e está en estado REMOVED 
 			    tx.commit();
 			} catch(Exception ex){
 			  	tx.rollback();
 			} 
 		}
+		
+		return id_retorno;
   }
 	
-  /*
-	// REALIZAR UNA QUERY
-	EntityManager em = emf.createEntityManager();
-	Query query = em.createQuery("select col from test tabla_db");
-	
-	// DESCONECTAR UNA ENTIDAD
-	EntityManager mem = emf.createEntityManager();
-	TablaDB td = mem.find(TablaDB.class,17);
-	mem.close();
-	//td está es estado DETACHED
-	 */	 	
+  
+  public List test_query(String q)
+  {
+	  // REALIZAR UNA QUERY
+	  EntityManager em = emf.createEntityManager();
+	  Query query = em.createQuery(q);	  
+	  
+	  return query.getResultList();	
+  }
+  
+  public List test_named_query(String est_name) // La named query se define como una annotation en la entity
+  {
+	  // REALIZAR UNA NAMED QUERY
+	  Query query = em.createNamedQuery("Estandar.findByName");
+	  query.setParameter("est_name", "%UPD%");
+	  
+	  return query.getResultList();
+  }
+  
+  public void test_desconectar_entity_manager()
+  {
+		// DESCONECTAR UNA ENTIDAD
+		try {
+			Estandar e = em.find(Estandar.class,1L);
+			em.close();
+		} catch (Exception e) {
+			
+		}
+		//e está es estado DETACHED 
+  } 	
   
   public static void main(String args[])
   {
-	  Tests_hibernate rh= new Tests_hibernate();
+	  EjemploHibernate rh= new EjemploHibernate();
 	  
 	  // TESTEAMOS CRUD
 	  
@@ -217,6 +241,20 @@ public class Tests_hibernate {
 	  // Testeamos el DELETE
 	  System.out.println("TEST DELETE");
 	  rh.test_delete(id);
+	  
+	  // Testeamos QUERY
+	  System.out.println("TEST QUERY");
+	  for (Estandar estandar:(List<Estandar>)rh.test_query("SELECT e FROM Estandar e"))
+		  System.out.println(estandar.toString());
+		   
+	  // Testeamos NAMED QUERY
+	  System.out.println("TEST NAMED QUERY");
+	  for (Estandar estandar:(List<Estandar>)rh.test_named_query("UPDATE") )
+		  System.out.println(estandar.toString());
+	  
+	  // Testeamos REMOVE
+	  System.out.println("TEST REMOVE ENTITIES");
+	  rh.test_desconectar_entity_manager();
 	  
 	  return;
   }

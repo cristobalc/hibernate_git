@@ -8,6 +8,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import static javax.persistence.FetchType.*;
@@ -15,6 +16,7 @@ import static javax.persistence.FetchType.*;
 /**
  * Entidad Estándar
  */
+@NamedQuery(name="Estandar.findByName", query="SELECT e FROM Estandar e WHERE e.est_name LIKE :est_name ")
 @Entity
 @Table(name = "estandar")
 public class Estandar {
