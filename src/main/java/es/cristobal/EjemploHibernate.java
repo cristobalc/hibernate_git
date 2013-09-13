@@ -20,12 +20,19 @@ import es.cristobal.entities.ReportStatus;
 import es.cristobal.entities.Vinculado;
 import es.cristobal.entities.Estandar;
 
-/*
+/**
+
 Pasos para crear una PERSISTENCE-UNIT con Hibernate Entity Manager en ENTORNOS NO GESTIONADOS
 (En entornos GESTIONADOS, el encargado es el contenedor. La ventaja que da esto es que el contenedor se encarga de cosas adicionales, como POOL DE CONEXIONES y CONTROL DE SEGURIDAD mejorado)
 
 1. Crear "persistence.xml" en "src/main/resources/META-INF" > ver ejemplo en este proyecto
-2. Crear la tabla y la base de datos, en este caso, en mysql:
+2. Crear la tabla y la base de datos, en este caso, en mysql
+
+	SQL generado con:
+	$mvn compile hibernate3:hbm2ddl
+	El resultado, por configuración, se coloca en:
+	target/hibernate3/sql/db_script.sql
+    Añadir la línea:
     CREATE DATABASE test;   
 
 	CREATE TABLE IF NOT EXISTS `estandar` (
